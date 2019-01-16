@@ -5,7 +5,7 @@
     <description_file>XBP9B_8074.xml</description_file>
     <settings>
       <setting command="CM">00FFFFFFFFFFF7FFFF</setting>
-      <setting command="HP">0</setting>
+      <setting command="HP">4</setting>
       <setting command="ID">7FFF</setting>
       <setting command="MT">3</setting>
       <setting command="PL">4</setting>
@@ -24,7 +24,7 @@
       <setting command="CI">11</setting>
       <setting command="EE">1</setting>
       <setting command="KY">55AA55AA55AA55AA55AA55AA55AA55AA</setting>
-      <setting command="BD">7</setting>
+      <setting command="BD">3</setting>
       <setting command="NB">0</setting>
       <setting command="SB">0</setting>
       <setting command="RO">3</setting>

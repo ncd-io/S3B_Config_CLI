@@ -53,7 +53,7 @@ function start(s3b, profile){
 
 }
 
-var serial = new comms.NcdSerial(process.argv[2], 9600);
+var serial = new comms.NcdSerial(process.argv[2], 115200);
 var _s3b = new digi(serial);
 
 function enableApi(s3b){
