@@ -4,8 +4,8 @@
   <profile>
     <description_file>XBP9B_8074.xml</description_file>
     <settings>
-      <setting command="CM">00FFFFFFFFFFF7FFFF</setting>
-      <setting command="HP">4</setting>
+      <setting command="CM">FFFFFFFFFFF7FFFF</setting>
+      <setting command="HP">0</setting>
       <setting command="ID">7FFF</setting>
       <setting command="MT">3</setting>
       <setting command="PL">4</setting>
@@ -56,7 +56,7 @@
       <setting command="IC">0</setting>
       <setting command="IF">1</setting>
       <setting command="IR">0</setting>
-      <setting command="SM">0</setting>
+      <setting command="SM">1</setting>
       <setting command="SO">2</setting>
       <setting command="SN">1</setting>
       <setting command="SP">12C</setting>
