@@ -37,13 +37,22 @@ if(process.argv[2] == 'help'){
 }
 
 function start(opts){
+	if(opts.op != 'save' && opts.op != 'load'){
+		console.log(`Bad Operation, ${opts.op} is not a valid choice, please use "save" or "load".`);
+		process.exit();
+	}
 	var serial = new comms.NcdSerial(opts.port, parseInt(opts.baudrate));
 	var s3b = new digi(serial);
 	serial._emitter.once('ready', () => {
-		if(opts.op == 'load') load(s3b, opts.filename);
-		else if(opts.op == 'save') save(s3b, opts.filename);
+		module.exports[opts.op](s3b, opts.filename);
 	});
 }
+
+module.exports = {
+	save: save,
+	load: load,
+	start: start
+};
 
 function save(s3b, fn, cm){
 	var builder = new xml2js.Builder();
