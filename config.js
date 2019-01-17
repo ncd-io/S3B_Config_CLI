@@ -27,7 +27,8 @@ function selectPort(){
 				name: 'baudrate',
 				type: 'list',
 				message: `Please select the baudrate for your module, then hit enter:`,
-				choices: ["115200","57600","38400","19200","9600","4800","2400","1200","600","300"],
+				choices: ["230400","115200","57600","38400","19200","9600","4800","2400"],
+				default: "115200"
 			},{
 				name: 'op',
 				type: 'list',

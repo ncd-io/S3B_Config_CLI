@@ -30,8 +30,9 @@ module.exports = class DigiComm{
 		return ++this._idCount;
 	}
 	dataIn(d){
-		//console.log('incoming', d);
+		// console.log('incoming', d);
 		if(this.at_wait){
+			// console.log('at_wait', d);
 			if(!this.at_wait_resp.length){
 				if(String.fromCharCode(d) != 'O'){
 					return;
@@ -49,20 +50,25 @@ module.exports = class DigiComm{
 					command: cmd
 				}
 				this.temp = [];
-				this.at_wait_resp = "";
-				//console.log('sending response', this.at_wait);
-				this._emitter.emit('digi-response:'+this.at_wait, frame);
-
+				this.at_wait_resp="";
+				var at_event = 'digi-response:'+this.at_wait;
 				this.at_wait = false;
+				this._emitter.emit(at_event, frame);
 			}
 			return;
 		}
 		if(!this.temp.length && d != 126){
-				return;
+			return;
 		}
 		// if(this.temp.length == 0) console.log('starting new buffer');
 		//Add incoming byte to buffer
 		this.temp.push(d);
+		if(this.temp.length == 6){
+			if(this.temp[2] == 2 && (this.temp[3] + this.temp[5]) == 255){
+				this._emitter.emit('powerup');
+				this.temp = [];
+			}
+		}
 		//A valid packet can be no less than 6 bytes (delimiter, lengthMSB, lengthLSB, frameType, [...frame data], checksum);
 		if(this.temp.length > 6){
 
@@ -145,7 +151,20 @@ module.exports = class DigiComm{
 			}
 			var tOut = setTimeout(() => {
 				that._emitter.removeListener(event, pass);
-				reject({error: 'Request timed out without response', original: packet, last_sent: that.lastSent});
+				if(that.at_wait && that.at_wait_resp != ""){
+					var frame = {
+						hasError: true,
+						error: 'Bad Data',
+						error_code: 405,
+						data: that.at_wait_resp
+					}
+					this.temp = [];
+					reject(frame);
+				}
+				if(that.at_wait) that.at_wait = false;
+				that.temp = [];
+				that.at_wait_resp = "";
+				reject({error: 'Request timed out without response', error_code: 408, original: packet, last_sent: that.lastSent});
 			}, that._timoutLimit);
 
 			that.on(event, pass);
@@ -166,16 +185,28 @@ module.exports = class DigiComm{
 		this.at_wait = command[1];
 		return this._send(command, 1, true);
 	}
-	enable_api(){
+	enable_api(cm){
 		var that = this;
 		return new Promise((fulfill, reject) => {
 			setTimeout(() => {
 				that.send_at_raw('+++').then((r) => {
 					that.send_at_raw("ATAP 01\r").then((r) => {
-						that.send_at_raw("ATAC\r").then((r) => {
-							that.send_at_raw("ATCN\r").then((r) => {
-								fulfill();
-							}).catch(reject);
+						that.send_at_raw("ATSM 00\r").then((r) => {
+							if(cm){
+								that.send_at_raw("ATBD 03\r").then((r) => {
+									that.send_at_raw("ATAC\r").then((r) => {
+										that.send_at_raw("ATCN\r").then((r) => {
+											fulfill();
+										}).catch(reject);
+									}).catch(reject);
+								});
+							}else{
+								that.send_at_raw("ATAC\r").then((r) => {
+									that.send_at_raw("ATCN\r").then((r) => {
+										fulfill();
+									}).catch(reject);
+								}).catch(reject);
+							}
 						}).catch(reject);
 					}).catch(reject);
 				}).catch(reject);
@@ -212,7 +243,7 @@ class outgoingFrame{
 		if(typeof param == 'undefined') return this.master._send(frame, expected);
 		if(param.constructor != Array) param = [param];
 		frame.push(...param);
-		if(command == "BD"){
+		if(command == "BD" && !queue){
 			return new Promise((fulfill, reject) => {
 				this.master._send(frame, expected).then((r) => {
 					var br = [2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400];
@@ -222,7 +253,7 @@ class outgoingFrame{
 					});
 					// that.master.serial.reconnect();
 
-				}).catch(reject);
+				}).catch().then(fulfill);
 			});
 		}
 		return this.master._send(frame, expected);
