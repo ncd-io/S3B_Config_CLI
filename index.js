@@ -44,8 +44,10 @@ function save(port, br, fn){
 	var data = {data:{profile:[{description_file:[fn.substr(fn.lastIndexOf('/')+1)],settings:[{setting:[]}]}]}};
 	var settings = [];
 	serial._emitter.once('ready', () => {
+		console.log('Enabling API Mode');
 		s3b.enable_api().then(()=>{
 			s3b.persist_settings().then(() => {
+				var pInd = ['|', '/', '-', "\\"];
 				backupCmds.forEach((command) => {
 					pqueue.add(() => {
 						return new Promise((fulfill, reject) => {
@@ -54,6 +56,11 @@ function save(port, br, fn){
 									var val = parseInt(r.data.map(v => ("00" + v.toString(16)).substr(-2)).join(''), 16).toString(16);
 									//console.log(command, val);
 									settings.push({'$':{command:command},'_':val});
+									process.stdout.clearLine();
+									process.stdout.cursorTo(0);
+
+									process.stdout.write('Reading Settings '+pInd[0]);
+									pInd.push(pInd.shift());
 								}
 								fulfill();
 							}).catch((err) => {
@@ -67,10 +74,14 @@ function save(port, br, fn){
 					return new Promise((fulfill, reject) => {
 						data.data.profile[0].settings[0].setting = settings;
 						var xml = builder.buildObject(data);
+						process.stdout.clearLine();
+						process.stdout.cursorTo(0);
+						console.log('Reading Settings Complete.');
+						console.log('Writing settings to file.');
 						fs.writeFile(fn, xml, (err) => {
 							if(err) console.log(err);
 							else{
-								console.log(fn + 'successfully created.');
+								console.log(fn + 'successfully written.');
 							}
 							fulfill();
 							process.exit();
@@ -88,12 +99,15 @@ function load(port, br, fn){
 	var s3b = new digi(serial);
 	var cmds = [];
 	serial._emitter.once('ready', () => {
+		console.log('Enabling API Mode');
 		s3b.enable_api().then(()=>{
 			s3b.persist_settings().then(() => {
 				fs.readFile(fn, function(err, data) {
 					parser.parseString(data, function (err, result) {
 						var settings = result.data.profile[0].settings[0].setting;
-						settings.forEach(function(element){
+						process.stdout.write('Updating Settings: 0%');
+						// console.log('Updating settings');
+						settings.forEach(function(element, i){
 							if(element._.length % 2 != 0){
 								element._ = '0'+element._;
 							}
@@ -101,6 +115,12 @@ function load(port, br, fn){
 							pqueue.add(() => {
 								return new Promise((fulfill, reject) => {
 									cmds.push(element.$.command);
+									process.stdout.clearLine();
+									process.stdout.cursorTo(0);
+
+									var perc = Math.floor(((i+1)/settings.length)*100);
+									process.stdout.write('Updating Settings: '+perc+'%');
+
 									s3b.send.at_command(element.$.command, [...val]).then(()=>{
 										fulfill();
 									}).catch((err) => {
@@ -112,8 +132,11 @@ function load(port, br, fn){
 						});
 						pqueue.add(() => {
 							return new Promise((fulfill, reject) => {
+								console.log('');
+								console.log('Writing changes');
 								s3b.persist_settings().then(() => {
 									fulfill();
+									console.log('Finished!');
 									process.exit();
 								}).catch(reject);
 							});

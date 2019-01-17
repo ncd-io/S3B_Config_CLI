@@ -162,14 +162,9 @@ module.exports = class DigiComm{
 	}
 	send_at_raw(command, expected){
 		var frame = [];
-		console.log('setting', command);
 		for(var i=0;i<command.length;i++) frame.push(command.charCodeAt(i));
 		this.at_wait = command[1];
 		return this._send(command, 1, true);
-		// if(typeof param == 'undefined') return this._send(frame, 1, true);
-		// if(param.constructor != Array) param = [param];
-		// frame.push(...param);
-		// return this._send(frame, 1, true);
 	}
 	enable_api(){
 		var that = this;
@@ -221,7 +216,6 @@ class outgoingFrame{
 			return new Promise((fulfill, reject) => {
 				this.master._send(frame, expected).then((r) => {
 					var br = [2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400];
-					console.log(param);
 					that.master.serial.serial.update({baudRate: br[param[0]-1]}, (err) => {
 						if(err) reject(err);
 						else fulfill(r);
