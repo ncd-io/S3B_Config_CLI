@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "inquirer": "^6.2.0",
+    "ncd-red-comm": "^1.6.3",
     "promise-queue": "^2.2.5",
     "serialport": "^6.2.0",
     "xml2js": "^0.4.19"
